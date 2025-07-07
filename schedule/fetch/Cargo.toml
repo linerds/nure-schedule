@@ -1,0 +1,16 @@
+[package]
+name = "schedule-fetch"
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+schedule-core = { path = "../core" }
+
+thiserror.workspace = true
