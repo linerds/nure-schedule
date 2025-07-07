@@ -2,9 +2,9 @@
 name = "schedule-storage"
 edition.workspace = true
 version.workspace = true
-authors.workspace = true
 description.workspace = true
 license.workspace = true
+readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 homepage.workspace = true
@@ -12,5 +12,5 @@ repository.workspace = true
 
 [dependencies]
 schedule-core = { path = "../core" }
-sqlx.workspace = true
+sqlx = { workspace = true, features = ["runtime-tokio", "sqlite", "chrono"] }
 thiserror.workspace = true

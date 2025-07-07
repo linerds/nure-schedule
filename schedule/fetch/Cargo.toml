@@ -2,9 +2,9 @@
 name = "schedule-fetch"
 edition.workspace = true
 version.workspace = true
-authors.workspace = true
 description.workspace = true
 license.workspace = true
+readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 homepage.workspace = true
@@ -12,5 +12,8 @@ repository.workspace = true
 
 [dependencies]
 schedule-core = { path = "../core" }
-
+serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
+chrono = { workspace = true, features = ["serde"] }
+ureq = { version = "3.0", features = ["json", "cookies", "socks-proxy"] }
