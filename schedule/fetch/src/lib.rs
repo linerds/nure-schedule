@@ -1,3 +1,8 @@
+mod error;
+mod models;
+
+use error::Error;
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -9,11 +14,12 @@ struct Health {
 }
 
 impl Health {
-    pub fn fetch() -> Result<Self, Box<dyn std::error::Error>> {
-        Ok(ureq::get("https://sh.mindenit.org/api/health")
+    pub fn fetch() -> Result<Self, Error> {
+        ureq::get("https://sh.mindenit.org/api/health")
             .call()?
             .body_mut()
-            .read_json()?)
+            .read_json::<Self>()
+            .map_err(Error::from)
     }
 }
 
@@ -23,7 +29,7 @@ mod tests {
 
     // cargo test -- --nocapture
     #[test]
-    fn health_fetch() -> Result<(), Box<dyn std::error::Error>> {
+    fn health_fetch() -> Result<(), Error> {
         let health = Health::fetch()?;
 
         println!("Health Status:");
