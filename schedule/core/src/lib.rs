@@ -1,3 +1,6 @@
+pub mod fetcher;
+pub mod models;
+
 // #[cfg(test)]
 // mod tests {
 //     use super::*;
