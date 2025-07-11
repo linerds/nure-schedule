@@ -1,9 +1,10 @@
+use crate::fetcher::{Error, Timetable};
+use crate::models::{AuditoriumFull, Event, Group, Teacher};
+
 use chrono::{DateTime, Utc};
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 
-use super::{Error, Timetable};
-use crate::models::{Auditorium, Event, Group, Teacher};
-
+// TODO: that should probably not be hardcoded
 const BASE_URL: &str = "https://sh.mindenit.org/api";
 
 #[allow(dead_code)]
@@ -25,7 +26,7 @@ pub struct Health {
 
 #[derive(Debug)]
 pub struct MindenitFetcher {
-    pub agent: ureq::Agent,
+    agent: ureq::Agent,
 }
 
 impl MindenitFetcher {
@@ -65,7 +66,7 @@ impl super::Fetcher for MindenitFetcher {
         self.fetch_response("teachers")
     }
 
-    fn fetch_auditoriums(&self) -> Result<Vec<Auditorium>, Error> {
+    fn fetch_auditoriums(&self) -> Result<Vec<AuditoriumFull>, Error> {
         self.fetch_response("auditoriums")
     }
 

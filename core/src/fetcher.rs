@@ -1,16 +1,16 @@
 pub mod cist;
 pub mod mindenit;
 
-use std::fmt::Display;
+use crate::models::{AuditoriumFull, Event, Group, Teacher};
 
-use crate::models::{Auditorium, Event, Group, Teacher};
+use std::fmt::Display;
 
 pub trait Fetcher {
     fn fetch_groups(&self) -> Result<Vec<Group>, Error>;
 
     fn fetch_teachers(&self) -> Result<Vec<Teacher>, Error>;
 
-    fn fetch_auditoriums(&self) -> Result<Vec<Auditorium>, Error>;
+    fn fetch_auditoriums(&self) -> Result<Vec<AuditoriumFull>, Error>;
 
     fn fetch_events(&self, timetable: Timetable) -> Result<Vec<Event>, Error>;
 }

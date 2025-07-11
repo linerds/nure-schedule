@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
-pub enum EventType {
+#[derive(Deserialize, Serialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum EventKind {
     #[serde(rename = "Лк")]
     Lecture,
     #[serde(rename = "Пз")]

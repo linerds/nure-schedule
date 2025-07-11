@@ -11,4 +11,4 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-schedule-state = { path = "../../schedule/state" }
+schedule-core = { path = "../../core" }
