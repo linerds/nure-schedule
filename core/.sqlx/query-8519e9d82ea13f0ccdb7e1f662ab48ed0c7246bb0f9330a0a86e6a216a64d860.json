@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO Auditoriums VALUES (1, 'h', 2, 30, 'h')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "8519e9d82ea13f0ccdb7e1f662ab48ed0c7246bb0f9330a0a86e6a216a64d860"
+}

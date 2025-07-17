@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM Events LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "kind",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "auditorium_id",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "count",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "starts_at",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "ends_at",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "bac5cb520da6fdc7a88d82dcd8f995730e2cc6c162782cbd926aced5b1561cab"
+}

@@ -14,6 +14,13 @@ repository.workspace = true
 thiserror.workspace = true
 chrono = { workspace = true, features = ["serde"] }
 chrono-tz = { workspace = true, features = ["serde"] }
-serde = { workspace = true, features = [ "derive" ] }
+serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
+
 ureq = { version = "3.0", features = ["json", "cookies", "socks-proxy"] }
+sqlx = { version = "0.8.6", features = [
+  "runtime-tokio",
+  "sqlite",
+  "chrono",
+  "migrate",       # For tests: https://docs.rs/sqlx/latest/sqlx/attr.test.html
+] }
