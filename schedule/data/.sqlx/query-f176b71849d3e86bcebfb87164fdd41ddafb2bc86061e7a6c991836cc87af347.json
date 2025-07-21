@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM Teachers LIMIT 1",
+  "query": "SELECT id, name FROM Teachers\n            JOIN EventTeachers ON teacher_id = id\n            WHERE event_id = ?",
   "describe": {
     "columns": [
       {
@@ -9,24 +9,18 @@
         "type_info": "Integer"
       },
       {
-        "name": "full_name",
+        "name": "name",
         "ordinal": 1,
-        "type_info": "Text"
-      },
-      {
-        "name": "short_name",
-        "ordinal": 2,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
-      false,
       false,
       false
     ]
   },
-  "hash": "2d10bf6783292a956789402cc655717eb4277281a71c1d38f059b75c19b62bea"
+  "hash": "f176b71849d3e86bcebfb87164fdd41ddafb2bc86061e7a6c991836cc87af347"
 }

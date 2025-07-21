@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM Groups LIMIT 1",
+  "query": "SELECT * FROM Groups WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -15,12 +15,12 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
       false
     ]
   },
-  "hash": "1820cd12bdcf228a551192978d67deb03aad0b198e39ca0c8236896abb8103ae"
+  "hash": "433e1196e48ea5b7eea5d1175a3a5af414112f1315ada3e7a349e0fde01d8304"
 }

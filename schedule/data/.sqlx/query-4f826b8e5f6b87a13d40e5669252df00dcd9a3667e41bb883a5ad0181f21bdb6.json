@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM Subjects LIMIT 1",
+  "query": "SELECT * FROM Subjects WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -20,7 +20,7 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -28,5 +28,5 @@
       false
     ]
   },
-  "hash": "ffca78dc2247f75c8bf558cbefb359af9635e50e67cb30bacb6706f0f8229746"
+  "hash": "4f826b8e5f6b87a13d40e5669252df00dcd9a3667e41bb883a5ad0181f21bdb6"
 }
