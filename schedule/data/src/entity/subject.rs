@@ -14,13 +14,13 @@ impl Subject {
             .await
     }
 
-    pub(crate) async fn insert(Self { id, abbr, name }: &Self, db: &Database) -> sqlx::Result<()> {
+    pub(crate) async fn insert(&self, db: &Database) -> sqlx::Result<()> {
         sqlx::query_as!(
             Self,
             "INSERT OR REPLACE INTO Subjects(id, abbr, name) VALUES (?, ?, ?)",
-            id,
-            abbr,
-            name
+            self.id,
+            self.abbr,
+            self.name
         )
         .execute(&db.0)
         .await?;

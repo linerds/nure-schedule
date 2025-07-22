@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use crate::{Database, Filter, join};
+use crate::{Database, Filter};
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum EventKind {
@@ -81,33 +81,35 @@ impl Event {
     // TODO that should either return Vec<Event>, or be moved out to Database impl or elsewhere
     pub async fn fetch_filtered(
         db: &Database,
-        include: BTreeSet<Filter>,
-        exclude: BTreeSet<Filter>,
+        mut include: BTreeSet<Filter>,
+        mut exclude: BTreeSet<Filter>,
     ) -> sqlx::Result<Vec<i64>> {
-        let includes: Vec<String> = include
-            .iter()
-            .filter(|x| !exclude.contains(x))
-            .map(Filter::build_query)
-            .collect();
+        let mut duplicates = Vec::new();
 
-        let excludes: Vec<String> = exclude
-            .iter()
-            .filter(|x| !include.contains(x))
-            .map(Filter::build_query)
-            .collect();
-
-        if includes.is_empty() {
+        for filter in &exclude {
+            if let Some(f) = include.take(filter) {
+                duplicates.push(f);
+            }
+        }
+        if include.is_empty() {
             return Ok(Vec::new());
         }
+        for filter in duplicates {
+            exclude.remove(&filter);
+        }
 
-        let mut query = join(includes, " UNION ");
-        if !excludes.is_empty() {
-            query.push_str(" EXCEPT ");
-            query.push_str(&join(excludes, " EXCEPT "));
+        let mut query = String::new();
+
+        let mut written = false;
+        for filter in include {
+            filter.write_query(&mut query, &mut written, "\n\nUNION\n\n");
+        }
+        for filter in exclude {
+            filter.write_query(&mut query, &mut written, "\n\nEXCEPT\n\n");
         }
 
         #[cfg(test)] // TODO: consider normal logging
-        dbg!(&query);
+        println!("{query}");
 
         sqlx::query_scalar(&query).fetch_all(&db.0).await
     }
@@ -117,14 +119,12 @@ impl Event {
 mod tests {
     use super::*;
 
-    use crate::FilterBuilder;
-
     #[sqlx::test]
     async fn fetch_filtered() -> sqlx::Result<()> {
         let db = Database::in_memory().await?;
 
         let include = BTreeSet::from([
-            FilterBuilder::new()
+            Filter::builder()
                 .groups([1, 2, 3])
                 .teachers([1, 2, 3])
                 .subjects([1, 2, 3])
@@ -134,25 +134,19 @@ mod tests {
                     EventKind::PracticalWork,
                     EventKind::LaboratoryWork,
                 ])
-                .build()
-                .unwrap(),
-            FilterBuilder::new()
+                .into(),
+            Filter::builder()
                 .teachers([1, 2, 3])
                 .subjects([1])
                 .auditoriums([1])
-                .build()
-                .unwrap(),
-            FilterBuilder::new()
-                .groups([1])
-                .auditoriums([1])
-                .build()
-                .unwrap(),
-            FilterBuilder::new().groups([42]).build().unwrap(),
+                .into(),
+            Filter::builder().groups([1]).auditoriums([1]).into(),
+            Filter::builder().groups([42]).into(),
         ]);
 
         let exclude = BTreeSet::from([
-            FilterBuilder::new().groups([42]).build().unwrap(),
-            FilterBuilder::new().teachers([1, 2]).build().unwrap(),
+            Filter::builder().groups([42]).into(),
+            Filter::builder().teachers([1, 2]).into(),
         ]);
 
         Event::fetch_filtered(&db, include, exclude).await?;

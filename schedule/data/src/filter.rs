@@ -1,6 +1,21 @@
-use crate::{EventKind, join};
+use crate::EventKind;
 
 use std::{collections::BTreeSet, fmt::Write};
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Filter {
+    kinds: BTreeSet<EventKind>,
+    subjects: BTreeSet<i64>,
+    auditoriums: BTreeSet<i64>,
+    groups: BTreeSet<i64>,
+    teachers: BTreeSet<i64>,
+}
+
+impl Filter {
+    pub fn builder() -> FilterBuilder {
+        FilterBuilder::default()
+    }
+}
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct FilterBuilder(Filter);
@@ -10,27 +25,18 @@ impl Default for FilterBuilder {
         Self::new()
     }
 }
-impl From<FilterBuilder> for Option<Filter> {
+impl From<FilterBuilder> for Filter {
     fn from(value: FilterBuilder) -> Self {
         value.build()
     }
 }
 
-/// [`FilterBuilder::build()`] will return [None] when it is empty:
 /// ```rust
-/// use schedule_data::FilterBuilder;
+/// use schedule_data::{Filter, FilterBuilder};
 ///
-/// let builder = FilterBuilder::new();
-/// assert_eq!(builder.build(), None);
-/// ```
-///
-/// It will build successfully when not empty:
-/// ```rust
-/// use schedule_data::{FilterBuilder, EventKind};
-///
-/// let mut builder = FilterBuilder::new().groups([1]);
-///
-/// let filter = builder.build().expect("filter is not empty");
+/// FilterBuilder::new().groups([4, 2]).build();
+/// // OR
+/// let filter: Filter = FilterBuilder::new().teachers([1]).into();
 /// ```
 impl FilterBuilder {
     pub const fn new() -> Self {
@@ -42,18 +48,8 @@ impl FilterBuilder {
             teachers: BTreeSet::new(),
         })
     }
-    pub fn build(self) -> Option<Filter> {
-        if self.0.kinds.is_empty()
-            && self.0.groups.is_empty()
-            && self.0.subjects.is_empty()
-            && self.0.auditoriums.is_empty()
-            && self.0.groups.is_empty()
-            && self.0.teachers.is_empty()
-        {
-            None
-        } else {
-            Some(self.0)
-        }
+    pub fn build(self) -> Filter {
+        self.0
     }
 
     #[must_use]
@@ -83,96 +79,111 @@ impl FilterBuilder {
     }
 }
 
-/// Has no public methods nor fields. See [`FilterBuilder`].
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Filter {
-    kinds: BTreeSet<EventKind>,
-    subjects: BTreeSet<i64>,
-    auditoriums: BTreeSet<i64>,
-    groups: BTreeSet<i64>,
-    teachers: BTreeSet<i64>,
-}
-
 impl Filter {
-    /// Should construct something similar to this (no formatting though):
+    /// Should write something similar to this:
     /// ```sql
     /// SELECT e.id FROM Events e
-    ///     JOIN EventGroups eg ON eg.event_id = e.id
-    ///     JOIN EventTeachers et ON et.event_id = e.id
-    /// WHERE
-    ///         e.auditorium_id = 1
-    ///     AND e.subject_id IN (1, 2)
-    ///     AND e.kind IN (1, 2, 3, 4)
-    ///     AND eg.group_id IN (1, 2)
-    ///     AND et.teacher_id IN (1, 2)
+    ///   JOIN EventGroups eg ON eg.event_id = e.id
+    ///   JOIN EventTeachers et ON et.event_id = e.id
+    /// WHERE e.auditorium_id = 1
+    ///   AND e.subject_id IN (1, 2)
+    ///   AND e.kind IN (1, 2, 3, 4)
+    ///   AND eg.group_id IN (1, 2)
+    ///   AND et.teacher_id IN (1, 2)
     /// GROUP BY e.id HAVING
-    ///         COUNT(DISTINCT eg.group_id) = 2
-    ///     AND COUNT(DISTINCT et.teacher_id) = 2
+    ///       COUNT(DISTINCT eg.group_id) = 2
+    ///   AND COUNT(DISTINCT et.teacher_id) = 2
     /// ```
-    pub(crate) fn build_query(
-        Self {
-            groups,
-            teachers,
-            subjects,
-            auditoriums,
-            kinds,
-        }: &Self,
-    ) -> String {
-        let mut query = String::from(" SELECT e.id FROM Events e ");
-
-        let mut counts = Vec::new();
-
-        if !groups.is_empty() {
-            query.push_str(" JOIN EventGroups eg ON eg.event_id = e.id ");
-            counts.push(format!(" COUNT(DISTINCT eg.group_id) = {} ", groups.len()));
-        }
-        if !teachers.is_empty() {
-            query.push_str(" JOIN EventTeachers et ON et.event_id = e.id ");
-            counts.push(format!(
-                " COUNT(DISTINCT et.teacher_id) = {} ",
-                teachers.len()
-            ));
+    pub(crate) fn write_query(&self, query: &mut String, written: &mut bool, write_before: &str) {
+        if self.kinds.is_empty()
+            && self.subjects.is_empty()
+            && self.auditoriums.is_empty()
+            && self.groups.is_empty()
+            && self.teachers.is_empty()
+        {
+            return;
         }
 
-        query.push_str(" WHERE ");
-        query.push_str(&join(
-            [
-                where_part("e.kind", kinds),
-                where_part("e.subject_id", subjects),
-                where_part("e.auditorium_id", auditoriums),
-                where_part("eg.group_id", groups),
-                where_part("et.teacher_id", teachers),
-            ]
-            .into_iter()
-            .flatten(),
-            " AND ",
-        ));
+        if *written {
+            query.push_str(write_before);
+        }
+        *written = true;
 
-        query.push_str(" GROUP BY e.id HAVING ");
-        query.push_str(&join(&counts, " AND "));
+        query.push_str("SELECT e.id FROM Events e\n");
 
-        query
+        if !self.groups.is_empty() {
+            query.push_str("  JOIN EventGroups eg ON eg.event_id = e.id\n");
+        }
+        if !self.teachers.is_empty() {
+            query.push_str("  JOIN EventTeachers et ON et.event_id = e.id\n");
+        }
+
+        query.push_str("WHERE ");
+
+        let mut prepend_and = false;
+        where_condition(query, &mut prepend_and, "e.kind", &self.kinds);
+        where_condition(query, &mut prepend_and, "e.subject_id", &self.subjects);
+        where_condition(
+            query,
+            &mut prepend_and,
+            "e.auditorium_id",
+            &self.auditoriums,
+        );
+        where_condition(query, &mut prepend_and, "eg.group_id", &self.groups);
+        where_condition(query, &mut prepend_and, "et.teacher_id", &self.teachers);
+
+        if self.groups.is_empty() && self.teachers.is_empty() {
+            return;
+        }
+        query.push_str("GROUP BY e.id HAVING\n  ");
+
+        if !self.groups.is_empty() {
+            #[cfg(test)] // pretty
+            if !self.teachers.is_empty() {
+                query.push_str("    ");
+            }
+
+            write!(query, "COUNT(DISTINCT eg.group_id) = {}", self.groups.len()).unwrap();
+
+            if !self.teachers.is_empty() {
+                query.push_str("\n  AND ");
+            }
+        }
+        if !self.teachers.is_empty() {
+            write!(
+                query,
+                "COUNT(DISTINCT et.teacher_id) = {}",
+                self.teachers.len()
+            )
+            .unwrap();
+        }
     }
 }
 
-fn where_part<I, T>(field: &str, iter: I) -> Option<String>
+fn where_condition<I, T>(query: &mut String, prepend_and: &mut bool, field: &str, iter: I)
 where
     I: IntoIterator<Item = T>,
     T: std::fmt::Display,
 {
     let mut iter = iter.into_iter();
 
-    let first = iter.next()?;
-
-    let Some(second) = iter.next() else {
-        return Some(format!(" {field} = {first} "));
+    let Some(first) = iter.next() else {
+        return;
     };
 
-    let mut res = format!(" {field} IN ({first}, {second}");
-    for val in iter {
-        write!(res, ", {val}").expect("write! to string should not fail");
+    if *prepend_and {
+        query.push_str("  AND ");
     }
-    res.push_str(") ");
+    *prepend_and = true; // for the future calls
 
-    Some(res)
+    let Some(second) = iter.next() else {
+        writeln!(query, "{field} = {first}").unwrap();
+        return;
+    };
+
+    write!(query, "{field} IN ({first}, {second}").unwrap();
+    for val in iter {
+        write!(query, ", {val}").unwrap();
+    }
+    query.push_str(")\n");
 }

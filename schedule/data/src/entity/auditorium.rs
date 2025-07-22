@@ -16,12 +16,12 @@ impl Auditorium {
             .await
     }
 
-    pub(crate) async fn insert(Self { id, name }: &Self, db: &Database) -> sqlx::Result<()> {
+    pub(crate) async fn insert(&self, db: &Database) -> sqlx::Result<()> {
         sqlx::query_as!(
             Self,
             "INSERT OR REPLACE INTO Auditoriums VALUES (?, ?)",
-            id,
-            name
+            self.id,
+            self.name
         )
         .execute(&db.0)
         .await?;
