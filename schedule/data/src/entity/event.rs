@@ -167,10 +167,7 @@ mod tests {
             FilterBuilder::new().teachers([1, 2]).build().unwrap(),
         ]);
 
-        // FIXME: why on Earth the first query ALWAYS fails on Database::in_memory()
-        let _ = dbg!(Event::fetch(&db, 1).await);
-
-        dbg!(Event::fetch_filtered(&db, include, exclude).await)?;
+        Event::fetch_filtered(&db, include, exclude).await?;
 
         db.close().await;
 

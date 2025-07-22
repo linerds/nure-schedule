@@ -1,7 +1,7 @@
-use std::{path::Path, time::Duration};
+use std::{path::Path, sync::Arc, time::Duration};
 
 use sqlx::{
-    SqlitePool,
+    ConnectOptions, Connection, SqlitePool,
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
 };
 
@@ -11,31 +11,44 @@ pub struct Database(pub(crate) SqlitePool);
 impl Database {
     /// Initialize or open an [`SqlitePool`] at the given `file_path`.
     pub async fn new(file_path: impl AsRef<Path>) -> sqlx::Result<Self> {
-        let connection = SqliteConnectOptions::new()
+        let opt = SqliteConnectOptions::new()
             .filename(file_path)
             .create_if_missing(true)
             .foreign_keys(true)
             .journal_mode(SqliteJournalMode::Wal);
+        // .optimize_on_close(true, analysis_limit) # TODO?
 
-        Self::from_connection(connection).await
-    }
+        // Separate single connection to avoid possible race conditions
+        let mut conn = opt.connect().await?;
+        sqlx::query(include_str!("../schema.sql"))
+            .execute(&mut conn)
+            .await?;
+        conn.close().await?;
 
-    #[cfg(test)]
-    pub async fn in_memory() -> sqlx::Result<Self> {
-        let connection = SqliteConnectOptions::new()
-            .foreign_keys(true)
-            .journal_mode(SqliteJournalMode::Wal);
-
-        Self::from_connection(connection).await
-    }
-
-    async fn from_connection(connection: SqliteConnectOptions) -> sqlx::Result<Self> {
         let pool = SqlitePoolOptions::new()
             .min_connections(1)
             .max_connections(5)
             .max_lifetime(None)
             .idle_timeout(Duration::from_secs(60))
-            .connect_with(connection)
+            .connect_with(opt)
+            .await?;
+
+        Ok(Self(pool))
+    }
+
+    #[cfg(test)]
+    pub async fn in_memory() -> sqlx::Result<Self> {
+        let opt = SqliteConnectOptions::new()
+            .in_memory(true)
+            .foreign_keys(true)
+            .journal_mode(SqliteJournalMode::Wal);
+
+        let pool = SqlitePoolOptions::new()
+            .min_connections(1) // when a connection closes the in-memory DB gets dropped
+            .max_connections(1) // each connection has a separate DB, so use at most one
+            .max_lifetime(None)
+            .idle_timeout(None)
+            .connect_with(opt)
             .await?;
 
         sqlx::query(include_str!("../schema.sql"))

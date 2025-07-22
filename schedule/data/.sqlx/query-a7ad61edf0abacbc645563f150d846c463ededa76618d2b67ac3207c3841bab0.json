@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT \n              kind, \n              count, \n              subject_id, \n              auditorium_id, \n              starts_at, \n              s.name AS subject_name, \n              s.abbr AS subject_abbr, \n              a.name AS auditorium_name \n            FROM Events e \n              JOIN Subjects s ON s.id = e.subject_id \n              JOIN Auditoriums a ON a.id = e.auditorium_id \n            WHERE e.id = ?",
+  "query": "SELECT\n              kind, \n              count, \n              subject_id, \n              auditorium_id, \n              starts_at, \n              s.name AS subject_name, \n              s.abbr AS subject_abbr, \n              a.name AS auditorium_name \n            FROM Events e \n              JOIN Subjects s ON s.id = e.subject_id \n              JOIN Auditoriums a ON a.id = e.auditorium_id \n            WHERE e.id = ?",
   "describe": {
     "columns": [
       {
@@ -58,5 +58,5 @@
       false
     ]
   },
-  "hash": "826dd1cee39a34fcfb43b5d3ca07f972c9fd09d4dca018be9821890250220ec9"
+  "hash": "a7ad61edf0abacbc645563f150d846c463ededa76618d2b67ac3207c3841bab0"
 }
