@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc, time::Duration};
+use std::{path::Path, time::Duration};
 
 use sqlx::{
     ConnectOptions, Connection, SqlitePool,

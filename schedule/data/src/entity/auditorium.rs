@@ -15,4 +15,16 @@ impl Auditorium {
             .fetch_optional(&db.0)
             .await
     }
+
+    pub(crate) async fn insert(Self { id, name }: &Self, db: &Database) -> sqlx::Result<()> {
+        sqlx::query_as!(
+            Self,
+            "INSERT OR REPLACE INTO Auditoriums VALUES (?, ?)",
+            id,
+            name
+        )
+        .execute(&db.0)
+        .await?;
+        Ok(())
+    }
 }

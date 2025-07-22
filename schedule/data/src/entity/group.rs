@@ -24,4 +24,16 @@ impl Group {
         .fetch_all(&db.0)
         .await
     }
+
+    pub(crate) async fn insert(Self { id, name }: &Self, db: &Database) -> sqlx::Result<()> {
+        sqlx::query_as!(
+            Self,
+            "INSERT OR REPLACE INTO Groups VALUES (?, ?)",
+            id,
+            name
+        )
+        .execute(&db.0)
+        .await?;
+        Ok(())
+    }
 }

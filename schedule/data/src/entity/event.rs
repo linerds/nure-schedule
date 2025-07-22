@@ -1,18 +1,18 @@
 use std::collections::BTreeSet;
 
-use crate::{Auditorium, Database, Filter, Subject, join};
+use crate::{Database, Filter, join};
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum EventKind {
-    Lecture,
-    PracticalWork,
-    LaboratoryWork,
-    Consultation,
+    Lecture = 0,
+    PracticalWork = 1,
+    LaboratoryWork = 2,
+    Consultation = 3,
     /// Залік
-    FinalTest,
-    Exam,
-    CourseWork,
-    Unknown,
+    FinalTest = 4,
+    Exam = 5,
+    CourseWork = 6,
+    Unknown = 255,
 }
 
 impl std::fmt::Display for EventKind {
@@ -20,7 +20,6 @@ impl std::fmt::Display for EventKind {
         write!(f, "{}", *self as u8) // TODO: sketchy
     }
 }
-
 impl From<i64> for EventKind {
     fn from(value: i64) -> Self {
         match value {
@@ -41,56 +40,45 @@ pub struct Event {
     pub id: i64,
     pub kind: EventKind,
     pub count: u8,
-    pub subject: Subject,
-    pub auditorium: Auditorium,
+    pub subject_id: i64,
+    pub auditorium_id: i64,
     pub starts_at: i64,
     // pub ends_at: i64,
-    // pub groups: Vec<Group>,
-    // pub teachers: Vec<Teacher>,
 }
 
 impl Event {
     pub async fn fetch(db: &Database, id: i64) -> sqlx::Result<Option<Self>> {
-        // let groups = Group::fetch_by_event(db, id).await?;
-        // let teachers = Teacher::fetch_by_event(db, id).await?;
-
-        Ok(sqlx::query!(
-            "SELECT
-              kind, 
-              count, 
-              subject_id, 
-              auditorium_id, 
-              starts_at, 
-              s.name AS subject_name, 
-              s.abbr AS subject_abbr, 
-              a.name AS auditorium_name 
-            FROM Events e 
-              JOIN Subjects s ON s.id = e.subject_id 
-              JOIN Auditoriums a ON a.id = e.auditorium_id 
-            WHERE e.id = ?",
-            id
-        )
-        .fetch_optional(&db.0)
-        .await?
-        .map(|e| Self {
-            id,
-            kind: e.kind.into(),
-            count: e.count as u8, // TODO: sketchy
-            subject: Subject {
-                id: e.subject_id,
-                abbr: e.subject_abbr,
-                name: e.subject_name,
-            },
-            auditorium: Auditorium {
-                id: e.auditorium_id,
-                name: e.auditorium_name,
-            },
-            starts_at: e.starts_at,
-            // groups,
-            // teachers,
-        }))
+        Ok(sqlx::query!("SELECT * FROM Events WHERE id = ?", id)
+            .fetch_optional(&db.0)
+            .await?
+            .map(|e| Self {
+                id,
+                kind: e.kind.into(),
+                count: e.count.try_into().unwrap_or(u8::MAX),
+                subject_id: e.subject_id,
+                auditorium_id: e.auditorium_id,
+                starts_at: e.starts_at,
+            }))
     }
 
+    pub(crate) async fn insert(&self, db: &Database) -> sqlx::Result<()> {
+        let kind = self.kind as u8;
+        sqlx::query_as!(
+            Self,
+            "INSERT OR REPLACE INTO Events(id, kind, count, subject_id, auditorium_id, starts_at) VALUES (?, ?, ?, ?, ?,?)",
+           self.id,
+           kind,
+           self.count,
+           self.subject_id,
+           self.auditorium_id,
+           self.starts_at,
+        )
+        .execute(&db.0)
+        .await?;
+        Ok(())
+    }
+
+    // TODO that should either return Vec<Event>, or be moved out to Database impl or elsewhere
     pub async fn fetch_filtered(
         db: &Database,
         include: BTreeSet<Filter>,
