@@ -1,4 +1,4 @@
-use crate::database::Database;
+use crate::Database;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Group {

@@ -2,7 +2,12 @@ use crate::EventKind;
 
 use std::{collections::BTreeSet, fmt::Write};
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+/// ```rust
+/// use schedule_data::Filter;
+///
+/// Filter::new().groups([4, 2]).teachers([1]);
+/// ```
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Filter {
     kinds: BTreeSet<EventKind>,
     subjects: BTreeSet<i64>,
@@ -12,74 +17,36 @@ pub struct Filter {
 }
 
 impl Filter {
-    pub fn builder() -> FilterBuilder {
-        FilterBuilder::default()
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct FilterBuilder(Filter);
-
-impl Default for FilterBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-impl From<FilterBuilder> for Filter {
-    fn from(value: FilterBuilder) -> Self {
-        value.build()
-    }
-}
-
-/// ```rust
-/// use schedule_data::{Filter, FilterBuilder};
-///
-/// FilterBuilder::new().groups([4, 2]).build();
-/// // OR
-/// let filter: Filter = FilterBuilder::new().teachers([1]).into();
-/// ```
-impl FilterBuilder {
-    pub const fn new() -> Self {
-        Self(Filter {
-            kinds: BTreeSet::new(),
-            subjects: BTreeSet::new(),
-            auditoriums: BTreeSet::new(),
-            groups: BTreeSet::new(),
-            teachers: BTreeSet::new(),
-        })
-    }
-    pub fn build(self) -> Filter {
-        self.0
+    pub fn new() -> Self {
+        Self::default()
     }
 
     #[must_use]
     pub fn kinds(mut self, iter: impl IntoIterator<Item = EventKind>) -> Self {
-        self.0.kinds = BTreeSet::from_iter(iter);
+        self.kinds = BTreeSet::from_iter(iter);
         self
     }
     #[must_use]
     pub fn subjects(mut self, iter: impl IntoIterator<Item = i64>) -> Self {
-        self.0.subjects = BTreeSet::from_iter(iter);
+        self.subjects = BTreeSet::from_iter(iter);
         self
     }
     #[must_use]
     pub fn auditoriums(mut self, iter: impl IntoIterator<Item = i64>) -> Self {
-        self.0.auditoriums = BTreeSet::from_iter(iter);
+        self.auditoriums = BTreeSet::from_iter(iter);
         self
     }
     #[must_use]
     pub fn groups(mut self, iter: impl IntoIterator<Item = i64>) -> Self {
-        self.0.groups = BTreeSet::from_iter(iter);
+        self.groups = BTreeSet::from_iter(iter);
         self
     }
     #[must_use]
     pub fn teachers(mut self, iter: impl IntoIterator<Item = i64>) -> Self {
-        self.0.teachers = BTreeSet::from_iter(iter);
+        self.teachers = BTreeSet::from_iter(iter);
         self
     }
-}
 
-impl Filter {
     /// Should write something similar to this:
     /// ```sql
     /// SELECT e.id FROM Events e
@@ -186,4 +153,36 @@ where
         write!(query, ", {val}").unwrap();
     }
     query.push_str(")\n");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn setters() {
+        assert_eq!(
+            Filter::new()
+                .kinds([
+                    EventKind::Lecture,
+                    EventKind::PracticalWork,
+                    EventKind::LaboratoryWork,
+                ])
+                .subjects([7, 8, 9])
+                .auditoriums([42])
+                .groups([1, 2, 3])
+                .teachers([4, 5, 6]),
+            Filter {
+                kinds: BTreeSet::from([
+                    EventKind::Lecture,
+                    EventKind::PracticalWork,
+                    EventKind::LaboratoryWork,
+                ]),
+                subjects: BTreeSet::from([7, 8, 9]),
+                auditoriums: BTreeSet::from([42]),
+                groups: BTreeSet::from([1, 2, 3]),
+                teachers: BTreeSet::from([4, 5, 6]),
+            }
+        );
+    }
 }

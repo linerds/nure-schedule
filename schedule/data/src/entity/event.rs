@@ -124,7 +124,8 @@ mod tests {
         let db = Database::in_memory().await?;
 
         let include = BTreeSet::from([
-            Filter::builder()
+            Filter::new(),
+            Filter::new()
                 .groups([1, 2, 3])
                 .teachers([1, 2, 3])
                 .subjects([1, 2, 3])
@@ -133,20 +134,19 @@ mod tests {
                     EventKind::Lecture,
                     EventKind::PracticalWork,
                     EventKind::LaboratoryWork,
-                ])
-                .into(),
-            Filter::builder()
+                ]),
+            Filter::new()
                 .teachers([1, 2, 3])
                 .subjects([1])
-                .auditoriums([1])
-                .into(),
-            Filter::builder().groups([1]).auditoriums([1]).into(),
-            Filter::builder().groups([42]).into(),
+                .auditoriums([1]),
+            Filter::new().groups([1]).auditoriums([1]),
+            Filter::new().groups([42]),
         ]);
 
         let exclude = BTreeSet::from([
-            Filter::builder().groups([42]).into(),
-            Filter::builder().teachers([1, 2]).into(),
+            Filter::new().groups([42]),
+            Filter::new().teachers([1, 2]),
+            Filter::default(),
         ]);
 
         Event::fetch_filtered(&db, include, exclude).await?;
