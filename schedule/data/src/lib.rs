@@ -1,31 +1,14 @@
 mod entity;
-mod error;
+// mod error; // TODO
 mod filter;
 
 pub use entity::*;
 pub use filter::*;
 
-// // TODO: move to utils crate
-// fn join<I, T>(iter: I, sep: &str) -> String
-// where
-//     I: IntoIterator<Item = T>,
-//     T: std::fmt::Display,
-// {
-//     use std::fmt::Write;
-
-//     let mut iter = iter.into_iter();
-//     let first = iter.next().map(|x| x.to_string()).unwrap_or_default();
-
-//     iter.fold(first, |mut acc, s| {
-//         write!(acc, "{sep}{s}").expect("failed to join strings with write! macro");
-//         acc
-//     })
-// }
-
 use std::{path::Path, time::Duration};
 
 use sqlx::{
-    ConnectOptions, Connection, SqlitePool,
+    Connection, SqlitePool,
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
 };
 
@@ -42,13 +25,6 @@ impl Database {
             .journal_mode(SqliteJournalMode::Wal);
         // .optimize_on_close(true, analysis_limit) # TODO?
 
-        // Separate single connection to avoid possible race conditions
-        let mut conn = opt.connect().await?;
-        sqlx::query(include_str!("../schema.sql"))
-            .execute(&mut conn)
-            .await?;
-        conn.close().await?;
-
         let pool = SqlitePoolOptions::new()
             .min_connections(1)
             .max_connections(5)
@@ -56,6 +32,13 @@ impl Database {
             .idle_timeout(Duration::from_secs(60))
             .connect_with(opt)
             .await?;
+
+        // Separate single connection to avoid possible race conditions
+        let mut conn = pool.acquire().await?.detach();
+        sqlx::query(include_str!("../schema.sql"))
+            .execute(&mut conn)
+            .await?;
+        conn.close().await?;
 
         Ok(Self(pool))
     }
@@ -94,7 +77,7 @@ mod tests {
 
     #[sqlx::test]
     async fn connect_to_file() -> sqlx::Result<()> {
-        let file = "/tmp/database_connect_to_file.sqlite3";
+        let file = "/tmp/data_connect_to_file.sqlite3";
         let _ = std::fs::remove_file(file);
 
         let db = Database::new(file).await?;
@@ -115,3 +98,20 @@ mod tests {
         Ok(())
     }
 }
+
+// TODO: move to utils crate
+// fn join<I, T>(iter: I, sep: &str) -> String
+// where
+//     I: IntoIterator<Item = T>,
+//     T: std::fmt::Display,
+// {
+//     use std::fmt::Write;
+
+//     let mut iter = iter.into_iter();
+//     let first = iter.next().map(|x| x.to_string()).unwrap_or_default();
+
+//     iter.fold(first, |mut acc, s| {
+//         write!(acc, "{sep}{s}").expect("failed to join strings with write! macro");
+//         acc
+//     })
+// }
