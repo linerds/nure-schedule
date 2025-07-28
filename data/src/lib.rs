@@ -1,5 +1,5 @@
 mod entity;
-// mod error; // TODO
+mod error; // TODO
 mod filter;
 
 pub use entity::*;
@@ -76,7 +76,7 @@ mod tests {
     use super::*;
 
     #[sqlx::test]
-    async fn connect_to_file() -> sqlx::Result<()> {
+    async fn open_file_db() -> sqlx::Result<()> {
         let file = "/tmp/data_connect_to_file.sqlite3";
         let _ = std::fs::remove_file(file);
 
@@ -85,7 +85,7 @@ mod tests {
 
         Path::new(file)
             .try_exists()
-            .unwrap_or_else(|_| panic!("{file} should have been created"));
+            .unwrap_or_else(|_| panic!("{file} should have been created by DB"));
 
         let _ = std::fs::remove_file(file);
 
@@ -93,7 +93,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn initialize_in_memory() -> sqlx::Result<()> {
+    async fn open_in_memory_db() -> sqlx::Result<()> {
         Database::in_memory().await?.close().await;
         Ok(())
     }

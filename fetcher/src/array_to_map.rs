@@ -1,0 +1,95 @@
+use std::{collections::BTreeMap, marker::PhantomData};
+
+use serde::{
+    Deserialize,
+    de::{Deserializer, SeqAccess, Visitor},
+};
+
+/// [`Deserialize`] an array of `Raw` values ( `[ Raw, .. ]` ) into a [`BTreeMap<i64, T>`]. \
+/// `Raw` must implement [`Deserialize`] and `Into<(i64, T)>`.
+pub struct ArrayToMap<Raw, T> {
+    map: BTreeMap<i64, T>,
+    _marker: PhantomData<fn(Raw) -> T>,
+}
+impl<R, T> From<ArrayToMap<R, T>> for BTreeMap<i64, T> {
+    fn from(value: ArrayToMap<R, T>) -> Self {
+        value.map
+    }
+}
+
+struct ArrayVisitor<R, T> {
+    _marker: PhantomData<fn() -> ArrayToMap<R, T>>,
+}
+
+impl<'de, R, T> Visitor<'de> for ArrayVisitor<R, T>
+where
+    R: Deserialize<'de> + Into<(i64, T)>,
+{
+    type Value = ArrayToMap<R, T>;
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let mut map = BTreeMap::new();
+        while let Some((id, group)) = seq.next_element::<R>()?.map(Into::into) {
+            map.insert(id, group); // TODO? log duplicate ids
+        }
+        Ok(ArrayToMap {
+            map,
+            _marker: PhantomData,
+        })
+    }
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("an array of values")
+    }
+}
+
+impl<'de, R, T> Deserialize<'de> for ArrayToMap<R, T>
+where
+    R: Deserialize<'de> + Into<(i64, T)>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_seq(ArrayVisitor {
+            _marker: PhantomData,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug)]
+    pub struct Person {
+        pub name: String,
+    }
+
+    #[derive(Deserialize)]
+    pub struct PersonRaw {
+        id: i64,
+        name: String,
+    }
+    impl From<PersonRaw> for (i64, Person) {
+        fn from(PersonRaw { id, name }: PersonRaw) -> Self {
+            (id, Person { name })
+        }
+    }
+
+    #[test]
+    fn parse() -> Result<(), serde_json::Error> {
+        let data = r#"[ { "id": 1, "name": "John" },
+                        { "id": 3, "name": "Jane" },
+                        { "id": 2, "name": "Alice" } ]"#;
+        let parsed: ArrayToMap<PersonRaw, Person> = serde_json::from_str(data)?;
+        let map: BTreeMap<i64, Person> = parsed.into();
+
+        println!("{map:#?}");
+
+        Ok(())
+    }
+}

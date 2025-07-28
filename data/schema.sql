@@ -76,25 +76,25 @@ CREATE TABLE IF NOT EXISTS EventTeachers (
 
 
 -- TODO: Tracking info freshness
-CREATE TABLE IF NOT EXISTS Fetches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fetched_at INTEGER NOT NULL
-);
+-- CREATE TABLE IF NOT EXISTS Updates (
+--     id INTEGER PRIMARY KEY AUTOINCREMENT,
+--     timestamp INTEGER NOT NULL
+-- );
 
-CREATE TABLE IF NOT EXISTS GroupFetches (
-    group_id INTEGER REFERENCES Groups(id) ON DELETE CASCADE,
-    fetch_id INTEGER REFERENCES Fetches(id) ON DELETE CASCADE,
-    PRIMARY KEY (group_id, fetch_id)
-) WITHOUT ROWID;
+-- CREATE TABLE IF NOT EXISTS UpdateGroups (
+--     group_id INTEGER REFERENCES Groups(id) ON DELETE CASCADE,
+--     update_id INTEGER REFERENCES Updates(id) ON DELETE CASCADE,
+--     PRIMARY KEY (group_id, fetch_id)
+-- ) WITHOUT ROWID;
 
-CREATE TABLE IF NOT EXISTS TeacherFetches (
-    teacher_id INTEGER REFERENCES Teachers(id) ON DELETE CASCADE,
-    fetch_id INTEGER REFERENCES Fetches(id) ON DELETE CASCADE,
-    PRIMARY KEY (teacher_id, fetch_id)
-) WITHOUT ROWID;
+-- CREATE TABLE IF NOT EXISTS TeacherUpdates (
+--     teacher_id INTEGER REFERENCES Teachers(id) ON DELETE CASCADE,
+--     fetch_id INTEGER REFERENCES Updates(id) ON DELETE CASCADE,
+--     PRIMARY KEY (teacher_id, fetch_id)
+-- ) WITHOUT ROWID;
 
-CREATE TABLE IF NOT EXISTS AuditoriumFetches (
-    auditorium_id INTEGER REFERENCES Auditoriums(id) ON DELETE CASCADE,
-    fetch_id INTEGER REFERENCES Fetches(id) ON DELETE CASCADE,
-    PRIMARY KEY (auditorium_id, fetch_id)
-) WITHOUT ROWID;
+-- CREATE TABLE IF NOT EXISTS AuditoriumUpdates (
+--     auditorium_id INTEGER REFERENCES Auditoriums(id) ON DELETE CASCADE,
+--     fetch_id INTEGER REFERENCES Updates(id) ON DELETE CASCADE,
+--     PRIMARY KEY (auditorium_id, fetch_id)
+-- ) WITHOUT ROWID;
