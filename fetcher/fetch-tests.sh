@@ -13,6 +13,8 @@ fetch_file() { # file-name, endpoint  <*< ><3
   curl "https://sh.mindenit.org/api/$2" > "test-data/$1"
 }
 
+mkdir -p test-data
+
 fetch_file "health.json"             "health"
 
 fetch_file "auditoriums.json"        "auditoriums"
