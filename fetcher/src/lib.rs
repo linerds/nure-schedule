@@ -1,16 +1,16 @@
 mod array_to_map;
 mod error;
 mod fetcher_agent;
-mod models;
 
 use array_to_map::ArrayToMap;
 use fetcher_agent::FetcherAgent;
 
 pub use error::*;
-pub use models::*;
 
 mod mindenit;
 pub use mindenit::Mindenit;
+
+use schedule_model::*;
 
 pub trait Fetcher: Default {
     fn new(agent: FetcherAgent) -> Self;

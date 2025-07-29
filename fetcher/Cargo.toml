@@ -11,7 +11,9 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-error_set = { version = "0.8", features = ["log"] }
+schedule-model = { path = "../model" }
+
+error_set = { version = "0.8" } # , features = ["log"] } # TODO
 
 # Fetch
 ureq = { version = "3.0", features = ["socks-proxy"] } # TODO? "cookies"

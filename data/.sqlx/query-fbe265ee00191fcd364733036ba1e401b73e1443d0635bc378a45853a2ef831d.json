@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR REPLACE INTO Events(id, kind, count, subject_id, auditorium_id, starts_at, duration) VALUES (?, ?, ?, ?, ?, ?,?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "fbe265ee00191fcd364733036ba1e401b73e1443d0635bc378a45853a2ef831d"
+}

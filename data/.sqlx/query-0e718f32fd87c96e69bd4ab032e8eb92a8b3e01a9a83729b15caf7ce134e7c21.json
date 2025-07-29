@@ -32,12 +32,18 @@
         "name": "starts_at",
         "ordinal": 5,
         "type_info": "Integer"
+      },
+      {
+        "name": "duration",
+        "ordinal": 6,
+        "type_info": "Integer"
       }
     ],
     "parameters": {
       "Right": 1
     },
     "nullable": [
+      false,
       false,
       false,
       false,

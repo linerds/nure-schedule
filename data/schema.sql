@@ -58,8 +58,9 @@ CREATE TABLE IF NOT EXISTS Events (
     -- kind TEXT CHECK (kind IN ('Лк', 'Пз', 'Лб', 'Конс', 'Зал', 'Екз', 'КП/КР')) NOT NULL,
     kind INTEGER NOT NULL, -- CHECK (kind >= 0 AND kind <= 6), -- REFERENCES EventKind(id) ON DELETE CASCADE,
     count INTEGER NOT NULL, -- sequence number of the particular class
-    starts_at INTEGER NOT NULL
-    -- ends_at INTEGER NOT NULL -- = starts_at + 1.5 hours
+    starts_at INTEGER NOT NULL,
+    duration INTEGER NOT NULL DEFAULT 95 -- minutes
+    -- ends_at INTEGER NOT NULL -- = starts_at + 95 mins
 ) WITHOUT ROWID;
 
 CREATE TABLE IF NOT EXISTS EventGroups (

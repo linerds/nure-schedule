@@ -43,8 +43,13 @@ impl Database {
         Ok(Self(pool))
     }
 
+    /// Call and await for graceful shutdown of the DB.
+    pub async fn close(self) {
+        self.0.close().await;
+    }
+
     #[cfg(test)]
-    pub async fn in_memory() -> sqlx::Result<Self> {
+    async fn in_memory() -> sqlx::Result<Self> {
         let opt = SqliteConnectOptions::new()
             .in_memory(true)
             .foreign_keys(true)
@@ -63,11 +68,6 @@ impl Database {
             .await?;
 
         Ok(Self(pool))
-    }
-
-    /// Call and await for graceful shutdown of the DB.
-    pub async fn close(self) {
-        self.0.close().await;
     }
 }
 

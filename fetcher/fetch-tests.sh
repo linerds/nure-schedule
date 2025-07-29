@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 
 group=11415512
-auditorium=-3 # DL :)
+# auditorium=-3 # DL :)
+auditorium=11616156 # ФІЛІЯ
 teacher=2145721
 
 export ALL_PROXY=socks5://127.0.0.1:9050 # muh privacy

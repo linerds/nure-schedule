@@ -43,6 +43,7 @@ pub struct Event {
     pub subject_id: i64,
     pub auditorium_id: i64,
     pub starts_at: i64,
+    pub duration: u8,
     // pub ends_at: i64,
 }
 
@@ -58,6 +59,7 @@ impl Event {
                 subject_id: e.subject_id,
                 auditorium_id: e.auditorium_id,
                 starts_at: e.starts_at,
+                duration: e.duration.try_into().unwrap_or(95),
             }))
     }
 
@@ -65,13 +67,14 @@ impl Event {
         let kind = self.kind as u8;
         sqlx::query_as!(
             Self,
-            "INSERT OR REPLACE INTO Events(id, kind, count, subject_id, auditorium_id, starts_at) VALUES (?, ?, ?, ?, ?,?)",
+            "INSERT OR REPLACE INTO Events(id, kind, count, subject_id, auditorium_id, starts_at, duration) VALUES (?, ?, ?, ?, ?, ?,?)",
            self.id,
            kind,
            self.count,
            self.subject_id,
            self.auditorium_id,
            self.starts_at,
+           self.duration,
         )
         .execute(&db.0)
         .await?;

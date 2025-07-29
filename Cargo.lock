@@ -1101,10 +1101,15 @@ name = "schedule-fetcher"
 version = "0.0.1"
 dependencies = [
  "error_set",
+ "schedule-model",
  "serde",
  "serde_json",
  "ureq",
 ]
+
+[[package]]
+name = "schedule-model"
+version = "0.0.0"
 
 [[package]]
 name = "scopeguard"
