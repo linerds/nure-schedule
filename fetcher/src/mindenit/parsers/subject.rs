@@ -7,8 +7,12 @@ pub struct SubjectRaw {
     brief: String,
 }
 
-impl From<SubjectRaw> for (i64, Subject) {
+impl From<SubjectRaw> for Subject {
     fn from(SubjectRaw { id, name, brief }: SubjectRaw) -> Self {
-        (id, Subject { name, abbr: brief })
+        Self {
+            id,
+            name,
+            abbr: brief,
+        }
     }
 }

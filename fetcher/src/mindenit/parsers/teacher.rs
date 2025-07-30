@@ -9,7 +9,7 @@ pub struct TeacherRaw {
     department_id: Option<i32>,
 }
 
-impl From<TeacherRaw> for (i64, Teacher) {
+impl From<TeacherRaw> for Teacher {
     fn from(
         TeacherRaw {
             id,
@@ -18,13 +18,11 @@ impl From<TeacherRaw> for (i64, Teacher) {
             department_id,
         }: TeacherRaw,
     ) -> Self {
-        (
+        Self {
             id,
-            Teacher {
-                abbr: short_name,
-                name: full_name,
-                department_id,
-            },
-        )
+            abbr: short_name,
+            name: full_name,
+            department_id,
+        }
     }
 }

@@ -12,7 +12,7 @@ use timetable::TimetableParser;
 
 use crate::{ArrayToMap, Auditorium, Group, Subject, Teacher, Timetable};
 
-use std::collections::BTreeMap;
+use std::collections::HashSet;
 
 #[derive(serde::Deserialize, Clone, PartialEq, PartialOrd, Debug)]
 pub struct Health {
@@ -29,6 +29,7 @@ pub type ResponseAuditoriums = Response<ArrayToMap<AuditoriumRaw, Auditorium>>;
 
 #[derive(serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)] // HACK: `success` is useless, remove it?
 pub struct Response<T> {
     data: Option<T>,
     success: Option<bool>,
@@ -69,7 +70,8 @@ impl TryFrom<ResponseTimetable> for Timetable {
         value.data()
     }
 }
-impl<R, T> TryFrom<Response<ArrayToMap<R, T>>> for BTreeMap<i64, T> {
+
+impl<R, T> TryFrom<Response<ArrayToMap<R, T>>> for HashSet<T> {
     type Error = Box<dyn std::error::Error>;
 
     fn try_from(value: Response<ArrayToMap<R, T>>) -> Result<Self, Self::Error> {
@@ -89,6 +91,8 @@ impl<R, T> TryFrom<Response<ArrayToMap<R, T>>> for BTreeMap<i64, T> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use super::*;
 
     use crate::ResponseError;
@@ -104,16 +108,16 @@ mod tests {
 
     fn parse_print_first<'de, Raw, Val>(data: &'de str) -> Result<(), ResponseError>
     where
-        Raw: Deserialize<'de> + Into<(i64, Val)>,
-        Val: std::fmt::Debug,
+        Raw: Deserialize<'de> + Into<Val>,
+        Val: std::fmt::Debug + std::hash::Hash + Eq,
     {
         let response: Response<ArrayToMap<Raw, Val>> = serde_json::from_str(data)?;
         println!(
             "{:#?}",
-            BTreeMap::try_from(response)?
-                .pop_first()
+            HashSet::try_from(response)?
+                .iter()
+                .next()
                 .ok_or_else(|| Box::from("The data is empty"))?
-                .1
         );
         Ok(())
     }
@@ -176,17 +180,12 @@ mod tests {
     fn timetable(data: &str) -> Result<(), ResponseError> {
         let response: ResponseTimetable = serde_json::from_str(data)?;
 
-        let Timetable {
-            events,
-            subjects,
-            auditoriums,
-            groups,
-            teachers,
-        }: Timetable = response.try_into()?;
+        let Timetable { events, subjects }: Timetable = response.try_into()?;
 
-        let event = events.first_key_value().unwrap().1;
+        let event = events.iter().next().unwrap();
 
         let crate::Event {
+            id,
             subject,
             auditorium,
             groups: event_groups,
@@ -194,23 +193,13 @@ mod tests {
             ..
         } = event;
 
-        println!("First event:\n{event:#?}");
-        println!("\nSubject:\n{:#?}", subjects.get(subject).unwrap());
-        println!("\nAuditorium:\n{:#?}", auditoriums.get(auditorium).unwrap());
-        println!(
-            "\nGroups:\n{:#?}",
-            event_groups
-                .iter()
-                .map(|x| groups.get(x).unwrap())
-                .collect::<Vec<_>>()
-        );
-        println!(
-            "\nTeachers:\n{:#?}",
-            event_teachers
-                .iter()
-                .map(|x| teachers.get(x).unwrap())
-                .collect::<Vec<_>>()
-        );
+        let subject = subjects.get(subject).unwrap();
+
+        println!("First event: {id}");
+        println!("Subject: {subject:#?}");
+        println!("Auditorium: {auditorium}");
+        println!("Groups: {event_groups:#?}");
+        println!("Teachers: {event_teachers:#?}");
 
         Ok(())
     }

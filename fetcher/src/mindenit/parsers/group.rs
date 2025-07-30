@@ -9,7 +9,7 @@ pub struct GroupRaw {
     speciality_id: Option<i32>,
 }
 
-impl From<GroupRaw> for (i64, Group) {
+impl From<GroupRaw> for Group {
     fn from(
         GroupRaw {
             id,
@@ -18,13 +18,11 @@ impl From<GroupRaw> for (i64, Group) {
             speciality_id,
         }: GroupRaw,
     ) -> Self {
-        (
+        Self {
             id,
-            Group {
-                name,
-                direction_id,
-                speciality_id,
-            },
-        )
+            name,
+            direction_id,
+            speciality_id,
+        }
     }
 }

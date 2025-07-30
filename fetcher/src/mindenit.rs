@@ -5,8 +5,8 @@ use parsers::{
 };
 
 use crate::{
-    Auditoriums, Fetcher, FetcherAgent, FetcherError, FetcherExt, Groups, Subjects, Teachers,
-    Timetable, TimetableKind, mindenit::parsers::Health,
+    mindenit::parsers::Health, Auditoriums, Fetcher, FetcherAgent, FetcherError, FetcherExt,
+    Groups, Subjects, Teachers, Timetable, TimetableKind,
 };
 
 #[derive(Clone, Debug)]
@@ -22,6 +22,7 @@ impl Default for Mindenit {
 }
 
 impl Mindenit {
+    #![allow(dead_code)] // HACK: useless function?
     fn fetch_health(&self) -> Result<Health, FetcherError> {
         serde_json::from_reader(self.agent.request(&format!("{}/health", self.base_url))?)
             .map_err(Into::into)
@@ -116,7 +117,7 @@ mod tests {
     fn fetch_groups() -> Result<(), FetcherError> {
         println!(
             "{:#?}",
-            MINDENIT.clone().fetch_groups()?.pop_first().unwrap()
+            MINDENIT.clone().fetch_groups()?.iter().next().unwrap()
         );
         Ok(())
     }
@@ -126,7 +127,7 @@ mod tests {
     fn fetch_teachers() -> Result<(), FetcherError> {
         println!(
             "{:#?}",
-            MINDENIT.clone().fetch_teachers()?.pop_first().unwrap()
+            MINDENIT.clone().fetch_teachers()?.iter().next().unwrap()
         );
         Ok(())
     }
@@ -136,7 +137,7 @@ mod tests {
     fn fetch_auditoriums() -> Result<(), FetcherError> {
         println!(
             "{:#?}",
-            MINDENIT.clone().fetch_auditoriums()?.pop_first().unwrap()
+            MINDENIT.clone().fetch_auditoriums()?.iter().next().unwrap()
         );
         Ok(())
     }
@@ -181,7 +182,8 @@ mod tests {
             MINDENIT
                 .clone()
                 .fetch_teachers_by_group(11103296)?
-                .pop_first()
+                .iter()
+                .next()
                 .unwrap()
         );
         Ok(())
@@ -194,25 +196,19 @@ mod tests {
             MINDENIT
                 .clone()
                 .fetch_subjects_by_group(11103296)?
-                .pop_first()
+                .iter()
+                .next()
                 .unwrap()
         );
         Ok(())
     }
 
     // NOTE: Taken from parsers.rs
-    fn timetable(
-        Timetable {
-            events,
-            subjects,
-            auditoriums,
-            groups,
-            teachers,
-        }: Timetable,
-    ) {
-        let event = events.first_key_value().unwrap().1;
+    fn timetable(Timetable { events, subjects }: Timetable) {
+        let event = events.iter().next().unwrap();
 
         let crate::Event {
+            id,
             subject,
             auditorium,
             groups: event_groups,
@@ -220,22 +216,12 @@ mod tests {
             ..
         } = event;
 
-        println!("First event:\n{event:#?}");
-        println!("\nSubject:\n{:#?}", subjects.get(subject).unwrap());
-        println!("\nAuditorium:\n{:#?}", auditoriums.get(auditorium).unwrap());
-        println!(
-            "\nGroups:\n{:#?}",
-            event_groups
-                .iter()
-                .map(|x| groups.get(x).unwrap())
-                .collect::<Vec<_>>()
-        );
-        println!(
-            "\nTeachers:\n{:#?}",
-            event_teachers
-                .iter()
-                .map(|x| teachers.get(x).unwrap())
-                .collect::<Vec<_>>()
-        );
+        let subject = subjects.get(subject).unwrap();
+
+        println!("First event: {id}");
+        println!("Subject: {subject:#?}");
+        println!("Auditorium: {auditorium}");
+        println!("Groups: {event_groups:#?}");
+        println!("Teachers: {event_teachers:#?}");
     }
 }

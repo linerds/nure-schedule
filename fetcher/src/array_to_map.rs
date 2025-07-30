@@ -1,17 +1,17 @@
-use std::{collections::BTreeMap, marker::PhantomData};
+use std::{collections::HashSet, hash::Hash, marker::PhantomData};
 
 use serde::{
-    Deserialize,
     de::{Deserializer, SeqAccess, Visitor},
+    Deserialize,
 };
 
-/// [`Deserialize`] an array of `Raw` values ( `[ Raw, .. ]` ) into a [`BTreeMap<i64, T>`]. \
-/// `Raw` must implement [`Deserialize`] and `Into<(i64, T)>`.
+/// [`Deserialize`] an array of `Raw` values ( `[ Raw, .. ]` ) into a [`HashSet<T>`]. \
+/// `Raw` must implement [`Deserialize`] and `Into<T>`.
 pub struct ArrayToMap<Raw, T> {
-    map: BTreeMap<i64, T>,
+    map: HashSet<T>,
     _marker: PhantomData<fn(Raw) -> T>,
 }
-impl<R, T> From<ArrayToMap<R, T>> for BTreeMap<i64, T> {
+impl<R, T> From<ArrayToMap<R, T>> for HashSet<T> {
     fn from(value: ArrayToMap<R, T>) -> Self {
         value.map
     }
@@ -23,7 +23,8 @@ struct ArrayVisitor<R, T> {
 
 impl<'de, R, T> Visitor<'de> for ArrayVisitor<R, T>
 where
-    R: Deserialize<'de> + Into<(i64, T)>,
+    R: Deserialize<'de> + Into<T>,
+    T: Hash + Eq,
 {
     type Value = ArrayToMap<R, T>;
 
@@ -31,9 +32,9 @@ where
     where
         A: SeqAccess<'de>,
     {
-        let mut map = BTreeMap::new();
-        while let Some((id, group)) = seq.next_element::<R>()?.map(Into::into) {
-            map.insert(id, group); // TODO? log duplicate ids
+        let mut map = HashSet::new();
+        while let Some(group) = seq.next_element::<R>()?.map(Into::into) {
+            map.insert(group); // TODO? log duplicate ids
         }
         Ok(ArrayToMap {
             map,
@@ -48,7 +49,8 @@ where
 
 impl<'de, R, T> Deserialize<'de> for ArrayToMap<R, T>
 where
-    R: Deserialize<'de> + Into<(i64, T)>,
+    R: Deserialize<'de> + Into<T>,
+    T: Hash + Eq,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -64,8 +66,9 @@ where
 mod tests {
     use super::*;
 
-    #[derive(Debug)]
+    #[derive(Debug, Hash, Eq, PartialEq)]
     pub struct Person {
+        pub id: i64,
         pub name: String,
     }
 
@@ -74,9 +77,9 @@ mod tests {
         id: i64,
         name: String,
     }
-    impl From<PersonRaw> for (i64, Person) {
+    impl From<PersonRaw> for Person {
         fn from(PersonRaw { id, name }: PersonRaw) -> Self {
-            (id, Person { name })
+            Self { id, name }
         }
     }
 
@@ -86,7 +89,7 @@ mod tests {
                         { "id": 3, "name": "Jane" },
                         { "id": 2, "name": "Alice" } ]"#;
         let parsed: ArrayToMap<PersonRaw, Person> = serde_json::from_str(data)?;
-        let map: BTreeMap<i64, Person> = parsed.into();
+        let map: HashSet<Person> = parsed.into();
 
         println!("{map:#?}");
 

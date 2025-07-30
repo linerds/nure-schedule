@@ -1,91 +1,51 @@
-use std::collections::BTreeMap;
+mod auditorium;
+mod event;
+mod group;
+mod subject;
+mod teacher;
 
-pub type Groups = BTreeMap<i64, Group>;
-pub type Teachers = BTreeMap<i64, Teacher>;
-pub type Subjects = BTreeMap<i64, Subject>;
-pub type Auditoriums = BTreeMap<i64, Auditorium>;
+pub use auditorium::Auditorium;
+pub use event::{Event, EventKind};
+pub use group::Group;
+pub use subject::Subject;
+pub use teacher::Teacher;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Group {
-    pub name: String,
-    pub direction_id: Option<i32>,
-    pub speciality_id: Option<i32>,
-}
+use std::collections::HashSet;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Teacher {
-    pub abbr: String,
-    pub name: String,
-    pub department_id: Option<i32>,
-}
+pub type Id = i64;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Subject {
-    pub abbr: String,
-    pub name: String,
-}
+pub type Groups = HashSet<Group>;
+pub type Teachers = HashSet<Teacher>;
+pub type Subjects = HashSet<Subject>;
+pub type Auditoriums = HashSet<Auditorium>;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Auditorium {
-    pub name: String,
-    pub floor: i8,
-    pub power: bool,
-    pub building: String,
-}
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct Timetable {
-    pub events: BTreeMap<i64, Event>,
-    pub subjects: BTreeMap<i64, EventSubject>,
-    pub auditoriums: BTreeMap<i64, EventAuditorium>,
-    pub groups: BTreeMap<i64, EventGroup>,
-    pub teachers: BTreeMap<i64, EventTeacher>,
+    pub events: HashSet<Event>,
+    pub subjects: HashSet<Subject>,
 }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Event {
-    pub starts_at: i64,
-    pub ends_at: i64,
-    pub kind: EventKind,
-    pub count: u8,
-    pub subject: i64,
-    pub auditorium: i64,
-    pub groups: Vec<i64>,
-    pub teachers: Vec<i64>,
-}
+#[macro_export]
+macro_rules! impl_borrow {
+    ($type:ident) => {
+        impl PartialEq for $type {
+            fn eq(&self, other: &$type) -> bool {
+                self.id == other.id
+            }
+        }
 
-// #[non_exhaustive] // just in case
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum EventKind {
-    Lecture,
-    PracticalWork,
-    LaboratoryWork,
-    Consultation,
-    /// Залік
-    FinalTest,
-    Exam,
-    CourseWork,
-    Unknown,
-}
+        impl Eq for $type {}
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct EventGroup {
-    pub name: String,
-}
+        impl std::hash::Hash for $type {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                self.id.hash(state);
+            }
+        }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct EventTeacher {
-    pub abbr: String, // TODO: Option? not mandatory, erroneous, can be computed
-    pub name: String,
-}
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct EventSubject {
-    pub abbr: String,
-    pub name: String,
-}
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct EventAuditorium {
-    pub name: String,
+        impl ::std::borrow::Borrow<Id> for $type {
+            fn borrow(&self) -> &Id {
+                &self.id
+            }
+        }
+    };
 }

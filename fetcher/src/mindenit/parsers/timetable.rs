@@ -1,10 +1,11 @@
-use crate::{Event, EventAuditorium, EventGroup, EventKind, EventSubject, EventTeacher, Timetable};
+use crate::{Event, Timetable};
 
-use std::collections::BTreeMap;
+use std::collections::HashSet;
 
+use schedule_model::{EventKind, Id, Subject};
 use serde::{
-    Deserialize,
     de::{Deserializer, SeqAccess, Visitor},
+    Deserialize,
 };
 
 pub struct TimetableParser(Timetable);
@@ -32,13 +33,9 @@ impl<'de> Deserialize<'de> for TimetableParser {
             where
                 A: SeqAccess<'de>,
             {
-                // I wish there was a private derife for Default
                 let mut timetable = Timetable {
-                    events: BTreeMap::default(),
-                    subjects: BTreeMap::default(),
-                    auditoriums: BTreeMap::default(),
-                    groups: BTreeMap::default(),
-                    teachers: BTreeMap::default(),
+                    events: HashSet::default(),
+                    subjects: HashSet::default(),
                 };
 
                 while let Some(EventRaw {
@@ -53,36 +50,22 @@ impl<'de> Deserialize<'de> for TimetableParser {
                     auditorium,
                 }) = seq.next_element()?
                 {
-                    let mut event_groups = Vec::with_capacity(groups.len());
-                    for (id, group) in groups.into_iter().map(Into::into) {
-                        event_groups.push(id);
-                        timetable.groups.insert(id, group);
-                    }
+                    let event_groups: HashSet<Id> = groups.iter().map(|g| g.id).collect();
+                    let event_teachers: HashSet<Id> = teachers.iter().map(|t| t.id).collect();
 
-                    let mut event_teachers = Vec::with_capacity(teachers.len());
-                    for (id, teacher) in teachers.into_iter().map(Into::into) {
-                        event_teachers.push(id);
-                        timetable.teachers.insert(id, teacher);
-                    }
-
-                    let (subject_id, subject) = subject.into();
-                    let (auditorium_id, auditorium) = auditorium.into();
-
-                    timetable.subjects.insert(subject_id, subject);
-                    timetable.auditoriums.insert(auditorium_id, auditorium);
-                    timetable.events.insert(
+                    timetable.events.insert(Event {
                         id,
-                        Event {
-                            starts_at: started_at,
-                            ends_at: ended_at,
-                            kind: kind.into(),
-                            count,
-                            subject: subject_id,
-                            auditorium: auditorium_id,
-                            groups: event_groups,
-                            teachers: event_teachers,
-                        },
-                    );
+                        starts_at: started_at,
+                        ends_at: ended_at,
+                        kind: kind.into(),
+                        count,
+                        subject: subject.id,
+                        auditorium: auditorium.id,
+                        groups: event_groups,
+                        teachers: event_teachers,
+                    });
+
+                    timetable.subjects.insert(subject.into());
                 }
 
                 Ok(TimetableParser(timetable))
@@ -99,7 +82,7 @@ pub struct EventRaw {
     pub id: i64,
     pub started_at: i64,
     pub ended_at: i64,
-    /// The sequence number of the current class
+    /// The sequence number of the event
     #[serde(rename = "numberPair")]
     pub count: u8,
 
@@ -150,11 +133,6 @@ pub struct EventGroupRaw {
     pub id: i64,
     pub name: String,
 }
-impl From<EventGroupRaw> for (i64, EventGroup) {
-    fn from(EventGroupRaw { id, name }: EventGroupRaw) -> Self {
-        (id, EventGroup { name })
-    }
-}
 
 #[derive(Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -163,17 +141,6 @@ pub struct EventTeacherRaw {
     pub full_name: String,
     pub short_name: String,
 }
-impl From<EventTeacherRaw> for (i64, EventTeacher) {
-    fn from(
-        EventTeacherRaw {
-            id,
-            full_name: name,
-            short_name: abbr,
-        }: EventTeacherRaw,
-    ) -> Self {
-        (id, EventTeacher { abbr, name })
-    }
-}
 
 #[derive(Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct EventSubjectRaw {
@@ -181,7 +148,7 @@ pub struct EventSubjectRaw {
     pub title: String,
     pub brief: String,
 }
-impl From<EventSubjectRaw> for (i64, EventSubject) {
+impl From<EventSubjectRaw> for Subject {
     fn from(
         EventSubjectRaw {
             id,
@@ -189,7 +156,7 @@ impl From<EventSubjectRaw> for (i64, EventSubject) {
             brief: abbr,
         }: EventSubjectRaw,
     ) -> Self {
-        (id, EventSubject { abbr, name })
+        Self { id, abbr, name }
     }
 }
 
@@ -197,9 +164,4 @@ impl From<EventSubjectRaw> for (i64, EventSubject) {
 pub struct EventAuditoriumRaw {
     pub id: i64,
     pub name: String,
-}
-impl From<EventAuditoriumRaw> for (i64, EventAuditorium) {
-    fn from(EventAuditoriumRaw { id, name }: EventAuditoriumRaw) -> Self {
-        (id, EventAuditorium { name })
-    }
 }

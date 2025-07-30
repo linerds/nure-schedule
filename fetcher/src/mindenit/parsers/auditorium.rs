@@ -10,7 +10,7 @@ pub struct AuditoriumRaw {
     building_id: String,
 }
 
-impl From<AuditoriumRaw> for (i64, Auditorium) {
+impl From<AuditoriumRaw> for Auditorium {
     fn from(
         AuditoriumRaw {
             id,
@@ -20,14 +20,12 @@ impl From<AuditoriumRaw> for (i64, Auditorium) {
             building_id,
         }: AuditoriumRaw,
     ) -> Self {
-        (
+        Self {
             id,
-            Auditorium {
-                name,
-                floor,
-                power: has_power,
-                building: building_id,
-            },
-        )
+            name,
+            floor,
+            power: has_power,
+            building: building_id,
+        }
     }
 }
