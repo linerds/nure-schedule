@@ -1,12 +1,11 @@
-use super::{impl_borrow, Id};
+use proc::PartialBorrow;
 
-#[derive(Clone, Ord, PartialOrd, Debug)]
+#[derive(Clone, Ord, PartialOrd, Debug, PartialBorrow)]
 pub struct Auditorium {
-    pub id: Id,
+    #[borrow_id]
+    pub id: i64,
     pub name: String,
     pub floor: i8,
     pub power: bool,
     pub building: String,
 }
-
-impl_borrow!(Auditorium);

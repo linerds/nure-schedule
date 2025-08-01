@@ -1,13 +1,10 @@
-use crate::impl_borrow;
+use proc::PartialBorrow;
 
-use super::Id;
-
-#[derive(Clone, Ord, PartialOrd, Debug)]
+#[derive(Clone, Ord, PartialOrd, Debug, PartialBorrow)]
 pub struct Group {
-    pub id: Id,
+    #[borrow_id]
+    pub id: i64,
     pub name: String,
     pub direction_id: Option<i32>,
     pub speciality_id: Option<i32>,
 }
-
-impl_borrow!(Group);

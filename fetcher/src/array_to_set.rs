@@ -7,18 +7,18 @@ use serde::{
 
 /// [`Deserialize`] an array of `Raw` values ( `[ Raw, .. ]` ) into a [`HashSet<T>`]. \
 /// `Raw` must implement [`Deserialize`] and `Into<T>`.
-pub struct ArrayToMap<Raw, T> {
+pub struct ArrayToSet<Raw, T> {
     map: HashSet<T>,
     _marker: PhantomData<fn(Raw) -> T>,
 }
-impl<R, T> From<ArrayToMap<R, T>> for HashSet<T> {
-    fn from(value: ArrayToMap<R, T>) -> Self {
+impl<R, T> From<ArrayToSet<R, T>> for HashSet<T> {
+    fn from(value: ArrayToSet<R, T>) -> Self {
         value.map
     }
 }
 
 struct ArrayVisitor<R, T> {
-    _marker: PhantomData<fn() -> ArrayToMap<R, T>>,
+    _marker: PhantomData<fn() -> ArrayToSet<R, T>>,
 }
 
 impl<'de, R, T> Visitor<'de> for ArrayVisitor<R, T>
@@ -26,7 +26,7 @@ where
     R: Deserialize<'de> + Into<T>,
     T: Hash + Eq,
 {
-    type Value = ArrayToMap<R, T>;
+    type Value = ArrayToSet<R, T>;
 
     fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
     where
@@ -36,7 +36,7 @@ where
         while let Some(group) = seq.next_element::<R>()?.map(Into::into) {
             map.insert(group); // TODO? log duplicate ids
         }
-        Ok(ArrayToMap {
+        Ok(ArrayToSet {
             map,
             _marker: PhantomData,
         })
@@ -47,7 +47,7 @@ where
     }
 }
 
-impl<'de, R, T> Deserialize<'de> for ArrayToMap<R, T>
+impl<'de, R, T> Deserialize<'de> for ArrayToSet<R, T>
 where
     R: Deserialize<'de> + Into<T>,
     T: Hash + Eq,
@@ -88,7 +88,7 @@ mod tests {
         let data = r#"[ { "id": 1, "name": "John" },
                         { "id": 3, "name": "Jane" },
                         { "id": 2, "name": "Alice" } ]"#;
-        let parsed: ArrayToMap<PersonRaw, Person> = serde_json::from_str(data)?;
+        let parsed: ArrayToSet<PersonRaw, Person> = serde_json::from_str(data)?;
         let map: HashSet<Person> = parsed.into();
 
         println!("{map:#?}");

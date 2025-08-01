@@ -1,8 +1,8 @@
 [package]
-name = "schedule-model"
-description = "Data Transfer Objects"
+name = "proc"
 edition.workspace = true
 version.workspace = true
+description.workspace = true
 license.workspace = true
 readme.workspace = true
 keywords.workspace = true
@@ -10,5 +10,9 @@ categories.workspace = true
 homepage.workspace = true
 repository.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
-proc = {path="../proc"}
+syn = "2.0"
+quote = "1.0"

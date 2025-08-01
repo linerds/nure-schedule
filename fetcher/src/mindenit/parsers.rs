@@ -10,7 +10,7 @@ use subject::SubjectRaw;
 use teacher::TeacherRaw;
 use timetable::TimetableParser;
 
-use crate::{ArrayToMap, Auditorium, Group, Subject, Teacher, Timetable};
+use crate::{ArrayToSet, Auditorium, Group, Subject, Teacher, Timetable};
 
 use std::collections::HashSet;
 
@@ -22,10 +22,10 @@ pub struct Health {
 }
 
 pub type ResponseTimetable = Response<TimetableParser>;
-pub type ResponseGroups = Response<ArrayToMap<GroupRaw, Group>>;
-pub type ResponseTeachers = Response<ArrayToMap<TeacherRaw, Teacher>>;
-pub type ResponseSubjects = Response<ArrayToMap<SubjectRaw, Subject>>;
-pub type ResponseAuditoriums = Response<ArrayToMap<AuditoriumRaw, Auditorium>>;
+pub type ResponseGroups = Response<ArrayToSet<GroupRaw, Group>>;
+pub type ResponseTeachers = Response<ArrayToSet<TeacherRaw, Teacher>>;
+pub type ResponseSubjects = Response<ArrayToSet<SubjectRaw, Subject>>;
+pub type ResponseAuditoriums = Response<ArrayToSet<AuditoriumRaw, Auditorium>>;
 
 #[derive(serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -71,10 +71,10 @@ impl TryFrom<ResponseTimetable> for Timetable {
     }
 }
 
-impl<R, T> TryFrom<Response<ArrayToMap<R, T>>> for HashSet<T> {
+impl<R, T> TryFrom<Response<ArrayToSet<R, T>>> for HashSet<T> {
     type Error = Box<dyn std::error::Error>;
 
-    fn try_from(value: Response<ArrayToMap<R, T>>) -> Result<Self, Self::Error> {
+    fn try_from(value: Response<ArrayToSet<R, T>>) -> Result<Self, Self::Error> {
         value.data()
     }
 }
@@ -91,8 +91,6 @@ impl<R, T> TryFrom<Response<ArrayToMap<R, T>>> for HashSet<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
-
     use super::*;
 
     use crate::ResponseError;
@@ -111,7 +109,7 @@ mod tests {
         Raw: Deserialize<'de> + Into<Val>,
         Val: std::fmt::Debug + std::hash::Hash + Eq,
     {
-        let response: Response<ArrayToMap<Raw, Val>> = serde_json::from_str(data)?;
+        let response: Response<ArrayToSet<Raw, Val>> = serde_json::from_str(data)?;
         println!(
             "{:#?}",
             HashSet::try_from(response)?

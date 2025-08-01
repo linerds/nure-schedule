@@ -2,7 +2,7 @@ use crate::{Event, Timetable};
 
 use std::collections::HashSet;
 
-use schedule_model::{EventKind, Id, Subject};
+use schedule_model::{EventKind, Subject};
 use serde::{
     de::{Deserializer, SeqAccess, Visitor},
     Deserialize,
@@ -50,8 +50,8 @@ impl<'de> Deserialize<'de> for TimetableParser {
                     auditorium,
                 }) = seq.next_element()?
                 {
-                    let event_groups: HashSet<Id> = groups.iter().map(|g| g.id).collect();
-                    let event_teachers: HashSet<Id> = teachers.iter().map(|t| t.id).collect();
+                    let event_groups: HashSet<i64> = groups.iter().map(|g| g.id).collect();
+                    let event_teachers: HashSet<i64> = teachers.iter().map(|t| t.id).collect();
 
                     timetable.events.insert(Event {
                         id,

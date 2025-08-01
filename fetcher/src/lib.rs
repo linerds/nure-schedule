@@ -1,8 +1,8 @@
-mod array_to_map;
+mod array_to_set;
 mod error;
 mod fetcher_agent;
 
-use array_to_map::ArrayToMap;
+use array_to_set::ArrayToSet;
 use fetcher_agent::FetcherAgent;
 
 pub use error::*;

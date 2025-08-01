@@ -1,23 +1,19 @@
-use crate::impl_borrow;
-
-use super::Id;
-
+use proc::PartialBorrow;
 use std::{collections::HashSet, hash::Hash};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialBorrow)]
 pub struct Event {
-    pub id: Id,
+    #[borrow_id]
+    pub id: i64,
     pub starts_at: i64,
     pub ends_at: i64,
     pub kind: EventKind,
     pub count: u8,
-    pub subject: Id,
-    pub auditorium: Id,
-    pub groups: HashSet<Id>,
-    pub teachers: HashSet<Id>,
+    pub subject: i64,
+    pub auditorium: i64,
+    pub groups: HashSet<i64>,
+    pub teachers: HashSet<i64>,
 }
-
-impl_borrow!(Event);
 
 impl Ord for Event {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
